@@ -13,7 +13,7 @@ import nursesRouter from './modules/nurses';
 import departmentsRouter from './modules/departments';
 import prescriptionsRouter from './modules/prescriptions';
 import laboratoryRouter from './modules/laboratory';
-import recordsRouter from './routes/records';
+import medicalRecordsRouter from './modules/medical-records';
 import billingRouter from './routes/billing';
 import miscRouter from './routes/misc';
 import bedsRouter from './routes/beds';
@@ -45,7 +45,6 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api', asyncHandler(requireAuth),
   prescriptionsRouter, // /prescriptions
-  recordsRouter,      // /medical-records
   billingRouter,      // /invoices
   miscRouter);        // /notifications, /activity, /search
 app.use('/api/patients', asyncHandler(requireAuth), patientsRouter);        // /, /:id
@@ -56,6 +55,7 @@ app.use('/api/departments', asyncHandler(requireAuth), departmentsRouter);
 app.use('/api/staff', asyncHandler(requireAuth), staffRouter);
 app.use('/api/medicines', asyncHandler(requireAuth), medicinesRouter);
 app.use('/api/lab-tests', asyncHandler(requireAuth), laboratoryRouter);
+app.use('/api/medical-records', asyncHandler(requireAuth), medicalRecordsRouter);
 app.use('/api/beds', asyncHandler(requireAuth), bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
 
 // 404 for unknown API routes.
