@@ -6,7 +6,7 @@ import { asyncHandler } from './utils/asyncHandler';
 import authRouter, { requireAuth } from './modules/auth';
 import patientsRouter from './modules/patients';
 import appointmentsRouter from './modules/appointments';
-import peopleRouter from './routes/people';
+import staffRouter from './modules/staff';
 import doctorsRouter from './modules/doctors';
 import nursesRouter from './modules/nurses';
 import departmentsRouter from './modules/departments';
@@ -43,7 +43,6 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api', asyncHandler(requireAuth),
-  peopleRouter,       // /doctors, /nurses, /departments, /staff
   pharmacyRouter,     // /medicines, /prescriptions
   laboratoryRouter,   // /lab-tests
   recordsRouter,      // /medical-records
@@ -53,7 +52,8 @@ app.use('/api/patients', asyncHandler(requireAuth), patientsRouter);        // /
 app.use('/api/appointments', asyncHandler(requireAuth), appointmentsRouter);
 app.use('/api/doctors', asyncHandler(requireAuth), doctorsRouter);
 app.use('/api/nurses', asyncHandler(requireAuth), nursesRouter);
-app.use('/api/departments', asyncHandler(requireAuth), departmentsRouter); // /, /trend, /:id, /:id/status
+app.use('/api/departments', asyncHandler(requireAuth), departmentsRouter);
+app.use('/api/staff', asyncHandler(requireAuth), staffRouter);
 app.use('/api/beds', asyncHandler(requireAuth), bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
 
 // 404 for unknown API routes.
