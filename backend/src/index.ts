@@ -3,7 +3,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { asyncHandler } from './utils/asyncHandler';
-import authRouter, { requireAuth } from './routes/auth';
+import authRouter, { requireAuth } from './modules/auth';
 import patientsRouter from './routes/patients';
 import appointmentsRouter from './routes/appointments';
 import peopleRouter from './routes/people';
