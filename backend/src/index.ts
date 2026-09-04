@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { asyncHandler } from './utils/asyncHandler';
 import authRouter, { requireAuth } from './modules/auth';
 import patientsRouter from './modules/patients';
-import appointmentsRouter from './routes/appointments';
+import appointmentsRouter from './modules/appointments';
 import peopleRouter from './routes/people';
 import pharmacyRouter from './routes/pharmacy';
 import laboratoryRouter from './routes/laboratory';
