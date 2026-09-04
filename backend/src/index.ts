@@ -16,7 +16,9 @@ import laboratoryRouter from './modules/laboratory';
 import medicalRecordsRouter from './modules/medical-records';
 import billingRouter from './modules/billing';
 import wardsRouter from './modules/wards';
-import miscRouter from './routes/misc';
+import notificationsRouter from './modules/notifications';
+import searchRouter from './modules/search';
+import activityRouter from './modules/activity';
 import bedsRouter from './modules/beds';
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -45,8 +47,10 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api', asyncHandler(requireAuth),
-  prescriptionsRouter, // /prescriptions
-  miscRouter);        // /notifications, /activity, /search
+  prescriptionsRouter,  // /prescriptions
+  notificationsRouter, // /notifications
+  searchRouter,        // /search
+  activityRouter);     // /activity
 app.use('/api/patients', asyncHandler(requireAuth), patientsRouter);        // /, /:id
 app.use('/api/appointments', asyncHandler(requireAuth), appointmentsRouter);
 app.use('/api/doctors', asyncHandler(requireAuth), doctorsRouter);
