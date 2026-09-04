@@ -4,7 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { asyncHandler } from './utils/asyncHandler';
 import authRouter, { requireAuth } from './modules/auth';
-import patientsRouter from './routes/patients';
+import patientsRouter from './modules/patients';
 import appointmentsRouter from './routes/appointments';
 import peopleRouter from './routes/people';
 import pharmacyRouter from './routes/pharmacy';
