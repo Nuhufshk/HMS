@@ -298,10 +298,10 @@ export function Dashboard() {
         </div>
       )}
 
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {/* <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <TrendingUp className="h-3.5 w-3.5 text-success" aria-hidden />
         Figures update as you use the system — all data is stored in memory for this demo.
-      </p>
+      </p> */}
     </div>
   );
 }
