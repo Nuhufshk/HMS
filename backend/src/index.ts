@@ -7,6 +7,7 @@ import authRouter, { requireAuth } from './modules/auth';
 import patientsRouter from './modules/patients';
 import appointmentsRouter from './modules/appointments';
 import staffRouter from './modules/staff';
+import medicinesRouter from './modules/medicines';
 import doctorsRouter from './modules/doctors';
 import nursesRouter from './modules/nurses';
 import departmentsRouter from './modules/departments';
@@ -54,6 +55,7 @@ app.use('/api/doctors', asyncHandler(requireAuth), doctorsRouter);
 app.use('/api/nurses', asyncHandler(requireAuth), nursesRouter);
 app.use('/api/departments', asyncHandler(requireAuth), departmentsRouter);
 app.use('/api/staff', asyncHandler(requireAuth), staffRouter);
+app.use('/api/medicines', asyncHandler(requireAuth), medicinesRouter);
 app.use('/api/beds', asyncHandler(requireAuth), bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
 
 // 404 for unknown API routes.
