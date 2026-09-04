@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, timestamp, jsonb, varchar, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, real, boolean, jsonb, varchar, pgEnum, index } from 'drizzle-orm/pg-core';
 
 /* ────────────────────── Enums ────────────────────── */
 
@@ -37,6 +37,8 @@ export const bedTypeEnum = pgEnum('bed_type', ['General', 'Private', 'ICU', 'Mat
 export const invoiceStatusEnum = pgEnum('invoice_status', ['paid', 'pending', 'partial', 'overdue']);
 export const paymentMethodEnum = pgEnum('payment_method', ['Cash', 'Mobile Money', 'Card', 'Bank Transfer', 'Insurance']);
 export const notificationTypeEnum = pgEnum('notification_type', ['appointment', 'lab', 'pharmacy', 'billing', 'patient', 'system']);
+export const departmentStatusEnum = pgEnum('department_status', ['active', 'inactive']);
+export const staffStatusEnum = pgEnum('staff_status', ['active', 'inactive']);
 
 /* ────────────────────── Tables ────────────────────── */
 
@@ -50,28 +52,28 @@ export const users = pgTable('users', {
   department: text('department').notNull(),
   phone: text('phone').notNull(),
   title: text('title'),
-});
+}, (t) => [index('idx_users_email').on(t.email), index('idx_users_role').on(t.role)]);
 
 export const departments = pgTable('departments', {
   id: varchar('id', { length: 50 }).primaryKey(),
   name: text('name').notNull(),
   code: text('code').notNull().unique(),
   headName: text('head_name').notNull(),
-  headId: text('head_id').notNull(),
+  headId: varchar('head_id', { length: 50 }),
   doctors: integer('doctors').notNull().default(0),
   nurses: integer('nurses').notNull().default(0),
   patients: integer('patients').notNull().default(0),
-  status: text('status').notNull().default('active'),
+  status: departmentStatusEnum('status').notNull().default('active'),
   location: text('location').notNull(),
   phone: text('phone').notNull(),
   description: text('description').notNull(),
-});
+}, (t) => [index('idx_departments_status').on(t.status)]);
 
 export const doctors = pgTable('doctors', {
   id: varchar('id', { length: 50 }).primaryKey(),
   name: text('name').notNull(),
   specialization: text('specialization').notNull(),
-  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id),
+  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id, { onDelete: 'set null' }),
   phone: text('phone').notNull(),
   email: text('email').notNull().unique(),
   status: doctorStatusEnum('status').notNull().default('active'),
@@ -79,19 +81,26 @@ export const doctors = pgTable('doctors', {
   joinedDate: text('joined_date').notNull(),
   schedule: jsonb('schedule').$type<Array<{ day: string; hours: string }>>().notNull().default([]),
   about: text('about').notNull().default(''),
-});
+}, (t) => [
+  index('idx_doctors_department').on(t.departmentId),
+  index('idx_doctors_status').on(t.status),
+  index('idx_doctors_availability').on(t.availability),
+]);
 
 export const nurses = pgTable('nurses', {
   id: varchar('id', { length: 50 }).primaryKey(),
   name: text('name').notNull(),
-  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id),
+  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id, { onDelete: 'set null' }),
   phone: text('phone').notNull(),
   email: text('email').notNull().unique(),
   shift: shiftEnum('shift').notNull().default('Morning'),
   ward: text('ward').notNull(),
   status: nurseStatusEnum('status').notNull().default('active'),
   joinedDate: text('joined_date').notNull(),
-});
+}, (t) => [
+  index('idx_nurses_department').on(t.departmentId),
+  index('idx_nurses_status').on(t.status),
+]);
 
 export const patients = pgTable('patients', {
   id: varchar('id', { length: 50 }).primaryKey(),
@@ -111,23 +120,32 @@ export const patients = pgTable('patients', {
   emergencyContact: jsonb('emergency_contact').$type<{ name: string; relationship: string; phone: string }>().notNull(),
   insurance: jsonb('insurance').$type<{ provider: string; number: string } | null>(),
   registrationDate: text('registration_date').notNull(),
-  assignedDoctorId: varchar('assigned_doctor_id', { length: 50 }).references(() => doctors.id),
+  assignedDoctorId: varchar('assigned_doctor_id', { length: 50 }).references(() => doctors.id, { onDelete: 'set null' }),
   status: patientStatusEnum('status').notNull().default('active'),
   type: patientTypeEnum('type').notNull().default('new'),
-});
+}, (t) => [
+  index('idx_patients_status').on(t.status),
+  index('idx_patients_doctor').on(t.assignedDoctorId),
+  index('idx_patients_name').on(t.firstName, t.lastName),
+]);
 
 export const appointments = pgTable('appointments', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id).notNull(),
-  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id).notNull(),
-  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id).notNull(),
+  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id, { onDelete: 'cascade' }).notNull(),
+  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id, { onDelete: 'cascade' }).notNull(),
+  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id, { onDelete: 'cascade' }).notNull(),
   date: text('date').notNull(),
   time: text('time').notNull(),
   reason: text('reason').notNull(),
   type: appointmentTypeEnum('type').notNull(),
   status: appointmentStatusEnum('status').notNull().default('scheduled'),
   notes: text('notes'),
-});
+}, (t) => [
+  index('idx_appointments_patient').on(t.patientId),
+  index('idx_appointments_doctor').on(t.doctorId),
+  index('idx_appointments_date').on(t.date),
+  index('idx_appointments_status').on(t.status),
+]);
 
 export const medicines = pgTable('medicines', {
   id: varchar('id', { length: 50 }).primaryKey(),
@@ -140,12 +158,16 @@ export const medicines = pgTable('medicines', {
   supplier: text('supplier').notNull(),
   status: stockStatusEnum('status').notNull().default('in_stock'),
   batch: text('batch').notNull(),
-});
+}, (t) => [
+  index('idx_medicines_status').on(t.status),
+  index('idx_medicines_category').on(t.category),
+  index('idx_medicines_expiry').on(t.expiryDate),
+]);
 
 export const prescriptions = pgTable('prescriptions', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id).notNull(),
-  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id).notNull(),
+  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id, { onDelete: 'cascade' }).notNull(),
+  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id, { onDelete: 'cascade' }).notNull(),
   date: text('date').notNull(),
   diagnosis: text('diagnosis').notNull(),
   medications: jsonb('medications').$type<Array<{
@@ -154,12 +176,16 @@ export const prescriptions = pgTable('prescriptions', {
   }>>().notNull().default([]),
   status: prescriptionStatusEnum('status').notNull().default('active'),
   notes: text('notes'),
-});
+}, (t) => [
+  index('idx_prescriptions_patient').on(t.patientId),
+  index('idx_prescriptions_doctor').on(t.doctorId),
+  index('idx_prescriptions_status').on(t.status),
+]);
 
 export const labTests = pgTable('lab_tests', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id).notNull(),
-  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id).notNull(),
+  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id, { onDelete: 'cascade' }).notNull(),
+  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id, { onDelete: 'cascade' }).notNull(),
   testName: text('test_name').notNull(),
   orderedDate: text('ordered_date').notNull(),
   sampleType: text('sample_type').notNull(),
@@ -172,12 +198,17 @@ export const labTests = pgTable('lab_tests', {
   abnormal: boolean('abnormal'),
   collectedAt: text('collected_at'),
   completedAt: text('completed_at'),
-});
+}, (t) => [
+  index('idx_labtests_patient').on(t.patientId),
+  index('idx_labtests_doctor').on(t.doctorId),
+  index('idx_labtests_status').on(t.status),
+  index('idx_labtests_date').on(t.orderedDate),
+]);
 
 export const medicalRecords = pgTable('medical_records', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id).notNull(),
-  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id).notNull(),
+  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id, { onDelete: 'cascade' }).notNull(),
+  doctorId: varchar('doctor_id', { length: 50 }).references(() => doctors.id, { onDelete: 'cascade' }).notNull(),
   date: text('date').notNull(),
   type: recordTypeEnum('type').notNull(),
   title: text('title').notNull(),
@@ -190,36 +221,48 @@ export const medicalRecords = pgTable('medical_records', {
     respiratoryRate: number; oxygenSaturation: number; weight: number; height: number;
   }>(),
   notes: text('notes'),
-});
+}, (t) => [
+  index('idx_medrecords_patient').on(t.patientId),
+  index('idx_medrecords_doctor').on(t.doctorId),
+  index('idx_medrecords_date').on(t.date),
+]);
 
 export const wards = pgTable('wards', {
   id: varchar('id', { length: 50 }).primaryKey(),
   name: text('name').notNull(),
   location: text('location').notNull(),
-  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id).notNull(),
+  departmentId: varchar('department_id', { length: 50 }).references(() => departments.id, { onDelete: 'cascade' }).notNull(),
 });
 
 export const beds = pgTable('beds', {
   id: varchar('id', { length: 50 }).primaryKey(),
   number: text('number').notNull(),
-  wardId: varchar('ward_id', { length: 50 }).references(() => wards.id).notNull(),
+  wardId: varchar('ward_id', { length: 50 }).references(() => wards.id, { onDelete: 'cascade' }).notNull(),
   type: bedTypeEnum('type').notNull(),
   status: bedStatusEnum('status').notNull().default('available'),
   ratePerDay: real('rate_per_day').notNull(),
-});
+}, (t) => [
+  index('idx_beds_ward').on(t.wardId),
+  index('idx_beds_status').on(t.status),
+  index('idx_beds_type').on(t.type),
+]);
 
 export const bedAssignments = pgTable('bed_assignments', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  bedId: varchar('bed_id', { length: 50 }).references(() => beds.id).notNull(),
-  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id).notNull(),
+  bedId: varchar('bed_id', { length: 50 }).references(() => beds.id, { onDelete: 'cascade' }).notNull(),
+  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id, { onDelete: 'cascade' }).notNull(),
   assignedAt: text('assigned_at').notNull(),
   releasedAt: text('released_at'),
   notes: text('notes'),
-});
+}, (t) => [
+  index('idx_bedassign_bed').on(t.bedId),
+  index('idx_bedassign_patient').on(t.patientId),
+  index('idx_bedassign_active').on(t.releasedAt),
+]);
 
 export const invoices = pgTable('invoices', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id).notNull(),
+  patientId: varchar('patient_id', { length: 50 }).references(() => patients.id, { onDelete: 'cascade' }).notNull(),
   date: text('date').notNull(),
   dueDate: text('due_date').notNull(),
   items: jsonb('items').$type<Array<{
@@ -235,7 +278,11 @@ export const invoices = pgTable('invoices', {
     method: string; reference?: string;
   }>>().notNull().default([]),
   issuedBy: text('issued_by').notNull(),
-});
+}, (t) => [
+  index('idx_invoices_patient').on(t.patientId),
+  index('idx_invoices_status').on(t.status),
+  index('idx_invoices_date').on(t.date),
+]);
 
 export const staff = pgTable('staff', {
   id: varchar('id', { length: 50 }).primaryKey(),
@@ -244,9 +291,12 @@ export const staff = pgTable('staff', {
   department: text('department').notNull(),
   phone: text('phone').notNull(),
   email: text('email').notNull().unique(),
-  status: text('status').notNull().default('active'),
+  status: staffStatusEnum('status').notNull().default('active'),
   joinedDate: text('joined_date').notNull(),
-});
+}, (t) => [
+  index('idx_staff_status').on(t.status),
+  index('idx_staff_department').on(t.department),
+]);
 
 export const notifications = pgTable('notifications', {
   id: varchar('id', { length: 50 }).primaryKey(),
@@ -256,4 +306,7 @@ export const notifications = pgTable('notifications', {
   time: text('time').notNull(),
   read: boolean('read').notNull().default(false),
   link: text('link'),
-});
+}, (t) => [
+  index('idx_notifications_read').on(t.read),
+  index('idx_notifications_time').on(t.time),
+]);

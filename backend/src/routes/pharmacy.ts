@@ -1,87 +1,159 @@
 import { Router } from 'express';
-import { db, deriveMedicineStatus, enrichPrescriptions, medicineDetail, nextId } from '../store';
+import { eq, desc, and, like, sql } from 'drizzle-orm';
+import { db, nextId, deriveMedicineStatus } from '../db';
+import { medicines, prescriptions, patients, doctors } from '../db/schema';
 import { todayISO } from '../utils/date';
-import type { Medicine, MedicineInput, Prescription, PrescriptionInput, PrescriptionStatus } from '../types';
+import type { MedicineInput, PrescriptionInput, PrescriptionStatus } from '../types';
 
 const router = Router();
 
 /* -------------------------------- Medicines -------------------------------- */
 
 /** GET /api/medicines */
-router.get('/medicines', (_req, res) => {
-  res.json(db.medicines.map(medicineDetail).sort((a, b) => a.name.localeCompare(b.name)));
+router.get('/medicines', async (_req, res) => {
+  const rows = await db.select().from(medicines).orderBy(medicines.name);
+  // Attach daysToExpiry
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const enriched = rows.map((m) => {
+    const target = new Date(`${m.expiryDate}T00:00:00`).getTime();
+    const daysToExpiry = Math.round((target - now.getTime()) / 86_400_000);
+    return { ...m, daysToExpiry };
+  });
+  res.json(enriched);
 });
 
 /** POST /api/medicines */
-router.post('/medicines', (req, res) => {
+router.post('/medicines', async (req, res) => {
   const body = (req.body ?? {}) as MedicineInput;
   if (!body.name || !body.category || !body.expiryDate || !body.supplier) {
     res.status(400).json({ message: 'Name, category, expiry date and supplier are required.' });
     return;
   }
-  const medicine: Medicine = {
-    ...body,
-    id: nextId('MED-', db.medicines),
+
+  const existing = await db.select({ id: medicines.id }).from(medicines);
+  const id = nextId('MED-', existing);
+  const quantity = Number(body.quantity) || 0;
+  const reorderLevel = Number(body.reorderLevel) || 0;
+
+  const values = {
+    id,
+    name: body.name,
+    category: body.category,
+    quantity,
+    reorderLevel,
+    unitPrice: Number(body.unitPrice) || 0,
+    expiryDate: body.expiryDate,
+    supplier: body.supplier,
     batch: body.batch?.trim() || `BT-${Math.floor(1000 + Math.random() * 9000)}`,
-    status: deriveMedicineStatus({ quantity: Number(body.quantity) || 0, reorderLevel: Number(body.reorderLevel) || 0, expiryDate: body.expiryDate }),
+    status: deriveMedicineStatus({ quantity, reorderLevel, expiryDate: body.expiryDate }),
   };
-  db.medicines.push(medicine);
-  res.status(201).json(medicine);
+
+  const inserted = await db.insert(medicines).values(values).returning();
+  res.status(201).json(inserted[0]);
 });
 
 /** PATCH /api/medicines/:id */
-router.patch('/medicines/:id', (req, res) => {
-  const idx = db.medicines.findIndex((m) => m.id === req.params.id);
-  if (idx === -1) {
+router.patch('/medicines/:id', async (req, res) => {
+  const { id: _id, ...patchFields } = (req.body ?? {}) as Partial<MedicineInput & { id: string }>;
+  const updateData: Record<string, unknown> = {};
+  const allowedKeys = ['name', 'category', 'quantity', 'reorderLevel', 'unitPrice', 'expiryDate', 'supplier', 'batch'];
+  for (const key of allowedKeys) {
+    if (key in patchFields) {
+      updateData[key] = (patchFields as Record<string, unknown>)[key];
+    }
+  }
+
+  // Recalculate status
+  const existing = await db.select().from(medicines).where(eq(medicines.id, req.params.id)).limit(1);
+  if (!existing.length) {
     res.status(404).json({ message: 'Medicine not found' });
     return;
   }
-  const merged = { ...db.medicines[idx], ...(req.body ?? {}), id: req.params.id };
-  merged.status = deriveMedicineStatus(merged);
-  db.medicines[idx] = merged;
-  res.json(medicineDetail(merged));
+  const merged = { ...existing[0], ...updateData };
+  updateData.status = deriveMedicineStatus({ quantity: merged.quantity, reorderLevel: merged.reorderLevel, expiryDate: merged.expiryDate });
+
+  const updated = await db.update(medicines)
+    .set(updateData)
+    .where(eq(medicines.id, req.params.id))
+    .returning();
+
+  const m = updated[0];
+  const target = new Date(`${m.expiryDate}T00:00:00`).getTime();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  res.json({ ...m, daysToExpiry: Math.round((target - today.getTime()) / 86_400_000) });
 });
 
 /** PATCH /api/medicines/:id/stock { delta } — e.g. {-1} when dispensing */
-router.patch('/medicines/:id/stock', (req, res) => {
-  const idx = db.medicines.findIndex((m) => m.id === req.params.id);
-  if (idx === -1) {
-    res.status(404).json({ message: 'Medicine not found' });
-    return;
-  }
+router.patch('/medicines/:id/stock', async (req, res) => {
   const delta = Number((req.body ?? {}).delta);
   if (!Number.isFinite(delta)) {
     res.status(400).json({ message: 'A numeric delta is required.' });
     return;
   }
-  const merged = { ...db.medicines[idx], quantity: Math.max(0, db.medicines[idx].quantity + delta), id: req.params.id };
-  merged.status = deriveMedicineStatus(merged);
-  db.medicines[idx] = merged;
-  res.json(medicineDetail(merged));
+
+  const existing = await db.select().from(medicines).where(eq(medicines.id, req.params.id)).limit(1);
+  if (!existing.length) {
+    res.status(404).json({ message: 'Medicine not found' });
+    return;
+  }
+
+  const newQty = Math.max(0, existing[0].quantity + delta);
+  const updated = await db.update(medicines)
+    .set({
+      quantity: newQty,
+      status: deriveMedicineStatus({ quantity: newQty, reorderLevel: existing[0].reorderLevel, expiryDate: existing[0].expiryDate }),
+    })
+    .where(eq(medicines.id, req.params.id))
+    .returning();
+
+  const m = updated[0];
+  const target = new Date(`${m.expiryDate}T00:00:00`).getTime();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  res.json({ ...m, daysToExpiry: Math.round((target - today.getTime()) / 86_400_000) });
 });
 
 /* ------------------------------- Prescriptions ------------------------------ */
 
+/** Enrich a prescription with patient and doctor names. */
+async function enrichRx(rows: typeof prescriptions.$inferSelect[]) {
+  return Promise.all(
+    rows.map(async (p) => {
+      const patRows = await db.select({ firstName: patients.firstName, lastName: patients.lastName })
+        .from(patients).where(eq(patients.id, p.patientId)).limit(1);
+      const docRows = await db.select({ name: doctors.name })
+        .from(doctors).where(eq(doctors.id, p.doctorId)).limit(1);
+      return {
+        ...p,
+        patientName: patRows[0] ? `${patRows[0].firstName} ${patRows[0].lastName}` : 'Unknown patient',
+        doctorName: docRows[0]?.name ?? 'Unknown doctor',
+      };
+    }),
+  );
+}
+
 /** GET /api/prescriptions?patientId= */
-router.get('/prescriptions', (req, res) => {
-  let list = [...db.prescriptions];
+router.get('/prescriptions', async (req, res) => {
   const patientId = String(req.query.patientId ?? '');
-  if (patientId) list = list.filter((p) => p.patientId === patientId);
-  res.json(enrichPrescriptions(list));
+  const whereClause = patientId ? eq(prescriptions.patientId, patientId) : undefined;
+  const rows = await db.select().from(prescriptions).where(whereClause).orderBy(desc(prescriptions.date));
+  res.json(await enrichRx(rows));
 });
 
 /** GET /api/prescriptions/:id */
-router.get('/prescriptions/:id', (req, res) => {
-  const found = db.prescriptions.find((p) => p.id === req.params.id);
-  if (!found) {
+router.get('/prescriptions/:id', async (req, res) => {
+  const rows = await db.select().from(prescriptions).where(eq(prescriptions.id, req.params.id)).limit(1);
+  if (!rows.length) {
     res.status(404).json({ message: 'Prescription not found' });
     return;
   }
-  res.json(enrichPrescriptions([found])[0]);
+  res.json((await enrichRx(rows))[0]);
 });
 
 /** POST /api/prescriptions */
-router.post('/prescriptions', (req, res) => {
+router.post('/prescriptions', async (req, res) => {
   const body = (req.body ?? {}) as PrescriptionInput;
   if (!body.patientId || !body.doctorId || !body.diagnosis) {
     res.status(400).json({ message: 'Patient, doctor and diagnosis are required.' });
@@ -91,54 +163,81 @@ router.post('/prescriptions', (req, res) => {
     res.status(422).json({ message: 'A prescription must contain at least one medication' });
     return;
   }
-  const prescription: Prescription = {
-    ...body,
-    id: nextId('RX-', db.prescriptions),
+
+  const existing = await db.select({ id: prescriptions.id }).from(prescriptions);
+  const id = nextId('RX-', existing);
+
+  const values = {
+    id,
+    patientId: body.patientId,
+    doctorId: body.doctorId,
     date: body.date ?? todayISO(),
+    diagnosis: body.diagnosis,
+    medications: body.medications,
     status: (body.status as PrescriptionStatus) ?? 'active',
+    notes: body.notes ?? null,
   };
-  db.prescriptions.unshift(prescription);
-  res.status(201).json(prescription);
+
+  const inserted = await db.insert(prescriptions).values(values).returning();
+  res.status(201).json(inserted[0]);
 });
 
 /** PATCH /api/prescriptions/:id/status { status } */
-router.patch('/prescriptions/:id/status', (req, res) => {
-  const idx = db.prescriptions.findIndex((p) => p.id === req.params.id);
-  if (idx === -1) {
-    res.status(404).json({ message: 'Prescription not found' });
-    return;
-  }
+router.patch('/prescriptions/:id/status', async (req, res) => {
   const status = (req.body ?? {}).status;
   if (!['active', 'dispensed', 'completed', 'cancelled'].includes(status)) {
     res.status(400).json({ message: 'Status must be active, dispensed, completed or cancelled.' });
     return;
   }
-  db.prescriptions[idx] = { ...db.prescriptions[idx], status, id: req.params.id };
-  res.json(db.prescriptions[idx]);
-});
 
-/** POST /api/prescriptions/:id/dispense — also decrements medicine stock. */
-router.post('/prescriptions/:id/dispense', (req, res) => {
-  const idx = db.prescriptions.findIndex((p) => p.id === req.params.id);
-  if (idx === -1) {
+  const updated = await db.update(prescriptions)
+    .set({ status })
+    .where(eq(prescriptions.id, req.params.id))
+    .returning();
+
+  if (!updated.length) {
     res.status(404).json({ message: 'Prescription not found' });
     return;
   }
-  if (db.prescriptions[idx].status === 'dispensed') {
+  res.json(updated[0]);
+});
+
+/** POST /api/prescriptions/:id/dispense — also decrements medicine stock. */
+router.post('/prescriptions/:id/dispense', async (req, res) => {
+  const rxRows = await db.select().from(prescriptions).where(eq(prescriptions.id, req.params.id)).limit(1);
+  if (!rxRows.length) {
+    res.status(404).json({ message: 'Prescription not found' });
+    return;
+  }
+  const rx = rxRows[0];
+  if (rx.status === 'dispensed') {
     res.status(422).json({ message: 'Prescription already dispensed' });
     return;
   }
-  // Decrement stock for each medication line (best-effort name match).
-  for (const med of db.prescriptions[idx].medications) {
-    const match = db.medicines.find((m) => med.name.toLowerCase().startsWith(m.name.toLowerCase().slice(0, 12)));
-    if (match) {
-      const merged = { ...match, quantity: Math.max(0, match.quantity - 1) };
-      merged.status = deriveMedicineStatus(merged);
-      db.medicines[db.medicines.indexOf(match)] = merged;
+
+  // Decrement stock for each medication line (best-effort name match)
+  for (const med of rx.medications) {
+    const matchRows = await db.select().from(medicines)
+      .where(like(sql`lower(${medicines.name})`, `${med.name.toLowerCase().slice(0, 12)}%`))
+      .limit(1);
+    if (matchRows.length) {
+      const match = matchRows[0];
+      const newQty = Math.max(0, match.quantity - 1);
+      await db.update(medicines)
+        .set({
+          quantity: newQty,
+          status: deriveMedicineStatus({ quantity: newQty, reorderLevel: match.reorderLevel, expiryDate: match.expiryDate }),
+        })
+        .where(eq(medicines.id, match.id));
     }
   }
-  db.prescriptions[idx] = { ...db.prescriptions[idx], status: 'dispensed', id: req.params.id };
-  res.json(db.prescriptions[idx]);
+
+  const updated = await db.update(prescriptions)
+    .set({ status: 'dispensed' })
+    .where(eq(prescriptions.id, req.params.id))
+    .returning();
+
+  res.json(updated[0]);
 });
 
 export default router;

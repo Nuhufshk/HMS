@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { asyncHandler } from './utils/asyncHandler';
 import authRouter, { requireAuth } from './routes/auth';
 import patientsRouter from './routes/patients';
 import appointmentsRouter from './routes/appointments';
@@ -38,16 +39,16 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'adom-hms-backend', time: new Date().toISOString() });
 });
 
-app.use('/api', requireAuth,
+app.use('/api', asyncHandler(requireAuth),
   peopleRouter,       // /doctors, /nurses, /departments, /staff
   pharmacyRouter,     // /medicines, /prescriptions
   laboratoryRouter,   // /lab-tests
   recordsRouter,      // /medical-records
   billingRouter,      // /invoices
   miscRouter);        // /notifications, /activity, /search
-app.use('/api/patients', requireAuth, patientsRouter);        // /, /:id
-app.use('/api/appointments', requireAuth, appointmentsRouter); // /, /trend, /:id, /:id/status
-app.use('/api/beds', requireAuth, bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
+app.use('/api/patients', asyncHandler(requireAuth), patientsRouter);        // /, /:id
+app.use('/api/appointments', asyncHandler(requireAuth), appointmentsRouter); // /, /trend, /:id, /:id/status
+app.use('/api/beds', asyncHandler(requireAuth), bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
 
 // 404 for unknown API routes.
 app.use('/api', (_req, res) => {

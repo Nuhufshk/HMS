@@ -1,74 +1,143 @@
 import { Router } from 'express';
-import { appointmentTrend, db, enrichAppointments, nextId } from '../store';
-import { dateTimeFromToday } from '../utils/date';
+import { eq, desc, and, sql } from 'drizzle-orm';
+import { db, nextId } from '../db';
+import { appointments, patients, doctors, departments } from '../db/schema';
+import { dateFromToday, weekdayShort, monthShort, dateTimeFromToday } from '../utils/date';
 import type { Appointment, AppointmentStatus } from '../types';
 
 const VALID_STATUSES: AppointmentStatus[] = ['scheduled', 'waiting', 'in_progress', 'completed', 'cancelled'];
 
 const router = Router();
 
+/** Enrich appointments with patient, doctor, and department names via JOINs. */
+async function enrichAppts(rows: typeof appointments.$inferSelect[]) {
+  return Promise.all(
+    rows.map(async (a) => {
+      const patientRows = await db.select({ firstName: patients.firstName, lastName: patients.lastName })
+        .from(patients).where(eq(patients.id, a.patientId)).limit(1);
+      const doctorRows = await db.select({ name: doctors.name })
+        .from(doctors).where(eq(doctors.id, a.doctorId)).limit(1);
+      const deptRows = await db.select({ name: departments.name })
+        .from(departments).where(eq(departments.id, a.departmentId)).limit(1);
+      return {
+        ...a,
+        patientName: patientRows[0] ? `${patientRows[0].firstName} ${patientRows[0].lastName}` : 'Unknown patient',
+        doctorName: doctorRows[0]?.name ?? 'Unassigned',
+        departmentName: deptRows[0]?.name ?? '—',
+      };
+    }),
+  );
+}
+
 /** GET /api/appointments?patientId=&doctorId= */
-router.get('/', (req, res) => {
-  let list = [...db.appointments];
+router.get('/', async (req, res) => {
   const patientId = String(req.query.patientId ?? '');
-  if (patientId) list = list.filter((a) => a.patientId === patientId);
   const doctorId = String(req.query.doctorId ?? '');
-  if (doctorId) list = list.filter((a) => a.doctorId === doctorId);
-  res.json(enrichAppointments(list));
+
+  const conditions = [];
+  if (patientId) conditions.push(eq(appointments.patientId, patientId));
+  if (doctorId) conditions.push(eq(appointments.doctorId, doctorId));
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const rows = await db.select().from(appointments)
+    .where(whereClause)
+    .orderBy(desc(sql`${appointments.date} || ${appointments.time}`));
+
+  const enriched = await enrichAppts(rows);
+  res.json(enriched);
 });
 
 /** GET /api/appointments/trend — last 7 days */
-router.get('/trend', (_req, res) => {
-  res.json(appointmentTrend());
+router.get('/trend', async (_req, res) => {
+  const days: Array<{ day: string; label: string; scheduled: number; completed: number; cancelled: number }> = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const date = dateFromToday(-i);
+    const rows = await db.select().from(appointments).where(eq(appointments.date, date));
+    days.push({
+      day: date,
+      label: `${weekdayShort(date)} ${monthShort(date).replace('.', '')}`,
+      scheduled: rows.filter((a) => a.status === 'scheduled' || a.status === 'waiting' || a.status === 'in_progress').length,
+      completed: rows.filter((a) => a.status === 'completed').length,
+      cancelled: rows.filter((a) => a.status === 'cancelled').length,
+    });
+  }
+  res.json(days);
 });
 
 /** POST /api/appointments */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const body = (req.body ?? {}) as Partial<Appointment>;
   if (!body.patientId || !body.doctorId || !body.date || !body.time) {
     res.status(400).json({ message: 'Patient, doctor, date and time are required.' });
     return;
   }
-  const appointment: Appointment = {
-    ...(body as Appointment),
-    id: nextId('APT-', db.appointments),
-    status: body.status ?? 'scheduled',
+
+  const existing = await db.select({ id: appointments.id }).from(appointments);
+  const id = nextId('APT-', existing);
+
+  const values = {
+    id,
+    patientId: body.patientId,
+    doctorId: body.doctorId,
+    departmentId: body.departmentId ?? '',
+    date: body.date,
+    time: body.time,
+    reason: body.reason ?? '',
+    type: (body.type as Appointment['type']) ?? 'Consultation',
+    status: (body.status as AppointmentStatus) ?? 'scheduled',
+    notes: body.notes ?? null,
   };
-  db.appointments.unshift(appointment);
-  res.status(201).json(appointment);
+
+  const inserted = await db.insert(appointments).values(values).returning();
+  res.status(201).json(inserted[0]);
 });
 
 /** PATCH /api/appointments/:id/status { status, notes? } */
-router.patch('/:id/status', (req, res) => {
-  const idx = db.appointments.findIndex((a) => a.id === req.params.id);
-  if (idx === -1) {
-    res.status(404).json({ message: 'Appointment not found' });
-    return;
-  }
+router.patch('/:id/status', async (req, res) => {
   const { status, notes } = (req.body ?? {}) as { status?: string; notes?: string };
   if (!status || !VALID_STATUSES.includes(status as AppointmentStatus)) {
     res.status(400).json({ message: `Status must be one of: ${VALID_STATUSES.join(', ')}` });
     return;
   }
-  const now = dateTimeFromToday(0);
-  db.appointments[idx] = {
-    ...db.appointments[idx],
-    status: status as AppointmentStatus,
-    notes: notes ?? db.appointments[idx].notes,
-    id: req.params.id,
-  };
-  res.json(db.appointments[idx]);
-});
 
-/** PATCH /api/appointments/:id */
-router.patch('/:id', (req, res) => {
-  const idx = db.appointments.findIndex((a) => a.id === req.params.id);
-  if (idx === -1) {
+  const updateData: Record<string, unknown> = { status };
+  if (notes !== undefined) updateData.notes = notes;
+
+  const updated = await db.update(appointments)
+    .set(updateData)
+    .where(eq(appointments.id, req.params.id))
+    .returning();
+
+  if (!updated.length) {
     res.status(404).json({ message: 'Appointment not found' });
     return;
   }
-  db.appointments[idx] = { ...db.appointments[idx], ...(req.body ?? {}), id: req.params.id };
-  res.json(db.appointments[idx]);
+  res.json(updated[0]);
+});
+
+/** PATCH /api/appointments/:id */
+router.patch('/:id', async (req, res) => {
+  const { id: _id, ...patchFields } = (req.body ?? {}) as Partial<Appointment>;
+  const updateData: Record<string, unknown> = {};
+  const allowedKeys = ['patientId', 'doctorId', 'departmentId', 'date', 'time', 'reason', 'type', 'status', 'notes'];
+  for (const key of allowedKeys) {
+    if (key in patchFields) {
+      updateData[key] = (patchFields as Record<string, unknown>)[key];
+    }
+  }
+
+  const updated = await db.update(appointments)
+    .set(updateData)
+    .where(eq(appointments.id, req.params.id))
+    .returning();
+
+  if (!updated.length) {
+    res.status(404).json({ message: 'Appointment not found' });
+    return;
+  }
+  res.json(updated[0]);
 });
 
 export default router;
