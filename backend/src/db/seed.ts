@@ -6,6 +6,7 @@ import {
   staff, notifications, wards, beds, bedAssignments,
 } from './schema';
 import { dateFromToday, dateTimeFromToday, daysUntil } from '../utils/date';
+import { hashPassword } from '../utils/password';
 
 const D = (offset: number) => dateFromToday(offset);
 const DT = (offset: number, hour: number, minute = 0) => dateTimeFromToday(offset, hour, minute);
@@ -542,7 +543,10 @@ async function seed() {
     await pool.query('TRUNCATE users, departments, doctors, nurses, patients, appointments, medicines, prescriptions, lab_tests, medical_records, invoices, staff, notifications, wards, beds, bed_assignments CASCADE');
 
     console.log('Seeding users...');
-    await db.insert(users).values(MOCK_USERS as (typeof users.$inferInsert)[]);
+    const hashedUsers = await Promise.all(
+      MOCK_USERS.map(async (u) => ({ ...u, password: await hashPassword(u.password) }))
+    );
+    await db.insert(users).values(hashedUsers as (typeof users.$inferInsert)[]);
 
     console.log('Seeding departments...');
     await db.insert(departments).values(MOCK_DEPARTMENTS as (typeof departments.$inferInsert)[]);

@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import type { JwtPayload, PublicUser } from './auth.types';
 import { JWT_SECRET, JWT_EXPIRES_IN_DAYS } from './auth.types';
 import type { User } from '../../types';
+import { comparePassword, hashPassword } from '../../utils/password';
 
 export function issueToken(userId: string): string {
   return jwt.sign({ id: userId }, JWT_SECRET, {
@@ -23,6 +24,8 @@ export function publicUser(user: User): PublicUser {
   return rest;
 }
 
-export function verifyPassword(user: User, password: string): boolean {
-  return user.password === password;
+export async function verifyPassword(user: User, password: string): Promise<boolean> {
+  return comparePassword(password, user.password);
 }
+
+export { hashPassword };
