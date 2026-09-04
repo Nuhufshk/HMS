@@ -17,7 +17,7 @@ import medicalRecordsRouter from './modules/medical-records';
 import billingRouter from './modules/billing';
 import wardsRouter from './modules/wards';
 import miscRouter from './routes/misc';
-import bedsRouter from './routes/beds';
+import bedsRouter from './modules/beds';
 
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || '127.0.0.1';
