@@ -1,0 +1,299 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Semantic design tokens — mapped to Tailwind color utilities below.  */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-strong: var(--primary-strong);
+
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-strong: var(--info-strong);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
+
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-strong: var(--warning-strong);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-strong: var(--destructive-strong);
+
+  --color-processing: var(--processing);
+  --color-processing-soft: var(--processing-soft);
+  --color-processing-strong: var(--processing-strong);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-tooltip-bg: var(--chart-tooltip-bg);
+  --color-chart-tooltip-border: var(--chart-tooltip-border);
+  --color-chart-tooltip-text: var(--chart-tooltip-text);
+
+  /* Static chart palette (identical in both themes) */
+  --color-chart-teal: #10b878;
+  --color-chart-blue: #3b82f6;
+  --color-chart-violet: #8b5cf6;
+  --color-chart-green: #22c55e;
+  --color-chart-amber: #f59e0b;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ----------------------------- Light theme ----------------------------- */
+/* Emerald green + slate-teal system derived from the brand reference.     */
+:root {
+  --background: #f3f8f4; /* light green-tinted surface */
+  --foreground: #1f2e33; /* dark slate-teal text */
+  --card: #ffffff;
+  --card-foreground: #1f2e33;
+  --popover: #ffffff;
+  --popover-foreground: #1f2e33;
+  --muted: #e9f1ec;
+  --muted-foreground: #5f7172;
+  --secondary: #e9f1ec;
+  --secondary-foreground: #2e4046;
+  --border: #dce7e0;
+  --border-strong: #c2d2c8;
+  --input: #ffffff;
+  --ring: #02a864;
+
+  --primary: #02a864; /* brand emerald */
+  --primary-hover: #018a54;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e3f6ec;
+  --primary-strong: #037a4c;
+
+  --info: #2563eb; /* blue-600 */
+  --info-soft: #eff6ff; /* blue-50 */
+  --info-strong: #1d4ed8; /* blue-700 */
+
+  --success: #16a34a; /* green-600 */
+  --success-soft: #f0fdf4; /* green-50 */
+  --success-strong: #15803d; /* green-700 */
+
+  --warning: #d97706; /* amber-600 */
+  --warning-soft: #fffbeb; /* amber-50 */
+  --warning-strong: #b45309; /* amber-700 */
+
+  --destructive: #dc2626; /* red-600 */
+  --destructive-soft: #fef2f2; /* red-50 */
+  --destructive-strong: #b91c1c; /* red-700 */
+
+  --processing: #7c3aed; /* violet-600 */
+  --processing-soft: #f5f3ff; /* violet-50 */
+  --processing-strong: #6d28d9; /* violet-700 */
+
+  --sidebar: #02a864; /* brand green sidebar (light mode) */
+  --sidebar-foreground: #ffffff;
+
+  --chart-grid: #dce7e0;
+  --chart-axis: #5f7172;
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: #dce7e0;
+  --chart-tooltip-text: #1f2e33;
+}
+
+/* ------------------------------ Dark theme ----------------------------- */
+/* Deep slate-teal surfaces with emerald accents (night-shift friendly).   */
+.dark {
+  --background: #1b2931;
+  --foreground: #eef6f1;
+  --card: #24343d;
+  --card-foreground: #eef6f1;
+  --popover: #2c3e47;
+  --popover-foreground: #eef6f1;
+  --muted: #2e4149;
+  --muted-foreground: #9db1ab;
+  --secondary: #2e4149;
+  --secondary-foreground: #c9d6d0;
+  --border: #3a4e55;
+  --border-strong: #4a5f66;
+  --input: #24343d;
+  --ring: #17b878;
+
+  --primary: #17b878; /* brighter emerald for dark surfaces */
+  --primary-hover: #12a365;
+  --primary-foreground: #04281a;
+  --primary-soft: rgba(23, 184, 120, 0.14);
+  --primary-strong: #2ed18c;
+
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+  --info-strong: #93c5fd;
+
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --success-strong: #4ade80;
+
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-strong: #fbbf24;
+
+  --destructive: #f87171;
+  --destructive-soft: rgba(248, 113, 113, 0.14);
+  --destructive-strong: #f87171;
+
+  --processing: #a78bfa;
+  --processing-soft: rgba(167, 139, 250, 0.14);
+  --processing-strong: #a78bfa;
+
+  --sidebar: #1f2e36;
+  --sidebar-foreground: #c9d6d0;
+
+  --chart-grid: #3a4e55;
+  --chart-axis: #9db1ab;
+  --chart-tooltip-bg: #2c3e47;
+  --chart-tooltip-border: #3a4e55;
+  --chart-tooltip-text: #eef6f1;
+}
+
+/* ------------------------------- Base layer ---------------------------- */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Consistent, visible keyboard focus across the whole app */
+  :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+  }
+}
+
+/* ------------------------------ Scrollbars ----------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ---------------------------- Motion utilities ------------------------- */
+@keyframes hms-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes hms-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes hms-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: hms-fade-in 0.18s ease-out;
+}
+.animate-pop-in {
+  animation: hms-pop-in 0.18s ease-out;
+}
+.animate-toast-in {
+  animation: hms-toast-in 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------- Invoice printing ------------------------- */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #invoice-area,
+  #invoice-area * {
+    visibility: visible;
+  }
+  #invoice-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+}

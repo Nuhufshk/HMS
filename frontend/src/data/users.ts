@@ -1,0 +1,86 @@
+import type { User } from '@/types';
+import { ROLE_LABELS } from '@/constants';
+
+/**
+ * Mock authentication credentials for the MVP.
+ * In production this would be replaced by a real auth API (see services/authService.ts).
+ */
+export const MOCK_USERS: User[] = [
+  {
+    id: 'USR-001',
+    name: 'Dr. Akosua Adjei',
+    email: 'admin@adommedicalcentre.gh',
+    password: 'admin123',
+    role: 'admin',
+    roleLabel: ROLE_LABELS.admin,
+    department: 'Administration',
+    phone: '+233 24 100 2201',
+    title: 'Chief Executive Officer',
+  },
+  {
+    id: 'USR-002',
+    name: 'Dr. Kofi Boateng',
+    email: 'doctor@adommedicalcentre.gh',
+    password: 'doctor123',
+    role: 'doctor',
+    roleLabel: ROLE_LABELS.doctor,
+    department: 'General Medicine',
+    phone: '+233 24 100 2202',
+    title: 'Consultant Physician',
+  },
+  {
+    id: 'USR-003',
+    name: 'Efua Mensah',
+    email: 'nurse@adommedicalcentre.gh',
+    password: 'nurse123',
+    role: 'nurse',
+    roleLabel: ROLE_LABELS.nurse,
+    department: 'Maternity',
+    phone: '+233 24 100 2203',
+    title: 'Senior Staff Nurse',
+  },
+  {
+    id: 'USR-004',
+    name: 'Akua Tetteh',
+    email: 'reception@adommedicalcentre.gh',
+    password: 'reception123',
+    role: 'receptionist',
+    roleLabel: ROLE_LABELS.receptionist,
+    department: 'Front Desk',
+    phone: '+233 24 100 2204',
+    title: 'Front Desk Officer',
+  },
+  {
+    id: 'USR-005',
+    name: 'Yaw Osei',
+    email: 'pharmacy@adommedicalcentre.gh',
+    password: 'pharmacy123',
+    role: 'pharmacist',
+    roleLabel: ROLE_LABELS.pharmacist,
+    department: 'Pharmacy',
+    phone: '+233 24 100 2205',
+    title: 'Chief Pharmacist',
+  },
+  {
+    id: 'USR-006',
+    name: 'Ama Agyeman',
+    email: 'lab@adommedicalcentre.gh',
+    password: 'lab123',
+    role: 'lab_technician',
+    roleLabel: ROLE_LABELS.lab_technician,
+    department: 'Laboratory',
+    phone: '+233 24 100 2206',
+    title: 'Senior Laboratory Technician',
+  },
+  {
+    id: 'USR-007',
+    name: 'Kwabena Frimpong',
+    email: 'accountant@adommedicalcentre.gh',
+    password: 'accountant123',
+    role: 'accountant',
+    roleLabel: ROLE_LABELS.accountant,
+    department: 'Finance',
+    phone: '+233 24 100 2207',
+    title: 'Chief Accountant',
+  },
+];

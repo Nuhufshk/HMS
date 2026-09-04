@@ -1,0 +1,149 @@
+
+> adom-hospital@1.0.0 dev
+> concurrently -n backend,frontend -c blue,green "npm run dev --prefix backend" "npm run dev --prefix frontend"
+
+[backend] 
+[backend] > adom-hms-backend@1.0.0 dev
+[backend] > tsx watch src/index.ts
+[backend] 
+[frontend] 
+[frontend] > adom-hms@1.0.0 dev
+[frontend] > vite
+[frontend] 
+[frontend] 
+[frontend]   [32m[1mVITE[22m v8.2.1[39m  [2mready in [0m[1m1607[22m[2m[0m ms[22m
+[frontend] 
+[frontend]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5175[22m/[39m
+[frontend]   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.137.244:[1m5175[22m/[39m  [2mWi-Fi[22m
+[backend] 🏥 Adom Medical Centre HMS API listening on http://127.0.0.1:3001
+[backend]    Demo sign-in: POST /api/auth/login  (e.g. admin@adommedicalcentre.gh / admin123)
+[backend] 12:57:05  POST /api/auth/login
+[backend] 12:57:06  GET /api/beds
+[backend] 12:57:26  POST /api/auth/login
+[backend] 12:57:26  GET /api/beds/wards
+[backend] 12:57:26  GET /api/beds/BD-003/history
+[backend] 12:57:41  POST /api/auth/login
+[backend] 12:57:42  POST /api/beds/BD-003/assign
+[backend] 12:57:42  POST /api/beds/BD-003/release
+[backend] 12:57:42  DELETE /api/beds/BD-003
+[backend] 12:57:42  POST /api/beds
+[backend] 12:59:06  GET /api/auth/me
+[backend] 12:59:06  GET /api/auth/me
+[backend] 12:59:06  GET /api/notifications
+[backend] 12:59:06  GET /api/patients
+[backend] 12:59:06  GET /api/appointments
+[backend] 12:59:06  GET /api/lab-tests
+[backend] 12:59:07  GET /api/doctors
+[backend] 12:59:07  GET /api/prescriptions
+[backend] 12:59:07  GET /api/invoices
+[backend] 12:59:07  GET /api/appointments/trend
+[backend] 12:59:07  GET /api/activity?limit=9
+[backend] 12:59:07  GET /api/patients
+[backend] 12:59:07  GET /api/appointments
+[backend] 12:59:07  GET /api/lab-tests
+[backend] 12:59:07  GET /api/doctors
+[backend] 12:59:07  GET /api/prescriptions
+[backend] 12:59:07  GET /api/invoices
+[backend] 12:59:07  GET /api/appointments/trend
+[backend] 12:59:07  GET /api/activity?limit=9
+[backend] 12:59:12  GET /api/beds
+[backend] 12:59:12  GET /api/beds/wards
+[backend] 12:59:13  GET /api/departments
+[backend] 12:59:13  GET /api/patients
+[backend] 12:59:13  GET /api/beds
+[backend] 12:59:13  GET /api/beds/wards
+[backend] 12:59:13  GET /api/departments
+[backend] 12:59:13  GET /api/patients
+[backend] 13:10:39  GET /api/auth/me
+[backend] 13:10:39  GET /api/auth/me
+[backend] 13:10:39  GET /api/notifications
+[backend] 13:10:39  GET /api/beds
+[backend] 13:10:39  GET /api/beds/wards
+[backend] 13:10:39  GET /api/departments
+[backend] 13:10:39  GET /api/patients
+[backend] 13:10:39  GET /api/beds
+[backend] 13:10:39  GET /api/beds/wards
+[backend] 13:10:40  GET /api/departments
+[backend] 13:10:40  GET /api/patients
+[backend] 1:10:52 pm [tsx] change in ./src\data\beds.ts Restarting...
+[backend] 🏥 Adom Medical Centre HMS API listening on http://127.0.0.1:3001
+[backend]    Demo sign-in: POST /api/auth/login  (e.g. admin@adommedicalcentre.gh / admin123)
+[backend] 1:11:09 pm [tsx] change in ./src\store.ts Restarting...
+[backend] 🏥 Adom Medical Centre HMS API listening on http://127.0.0.1:3001
+[backend]    Demo sign-in: POST /api/auth/login  (e.g. admin@adommedicalcentre.gh / admin123)
+[backend] 1:11:19 pm [tsx] change in ./src\store.ts Restarting...
+[backend] 🏥 Adom Medical Centre HMS API listening on http://127.0.0.1:3001
+[backend]    Demo sign-in: POST /api/auth/login  (e.g. admin@adommedicalcentre.gh / admin123)
+[backend] 1:12:00 pm [tsx] change in ./src\store.ts Restarting...
+[backend] 🏥 Adom Medical Centre HMS API listening on http://127.0.0.1:3001
+[backend]    Demo sign-in: POST /api/auth/login  (e.g. admin@adommedicalcentre.gh / admin123)
+[backend] 1:13:08 pm [tsx] change in ./src\routes\beds.ts Restarting...
+[backend] 🏥 Adom Medical Centre HMS API listening on http://127.0.0.1:3001
+[backend]    Demo sign-in: POST /api/auth/login  (e.g. admin@adommedicalcentre.gh / admin123)
+[frontend] [2m1:13:45 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[frontend] [2m1:14:01 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/bed-management/BedManagement.tsx[22m
+[backend] 13:14:02  GET /api/beds
+[backend] 13:14:02  GET /api/beds/wards
+[frontend] [2m1:14:02 pm[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mEach child in a list should have a unique "key" prop.
+[frontend] 
+[frontend] Check the render method of `BedManagement`. See https://react.dev/link/warning-keys for more information.
+[backend] 13:14:03  GET /api/patients
+[backend] 13:14:03  GET /api/departments
+[frontend] [2m1:17:24 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/bed-management/BedManagement.tsx[22m
+[frontend] [2m1:17:25 pm[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/bed-management/BedManagement.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[frontend] [2m1:17:30 pm[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/routes/AppRoutes.tsx, /src/index.css[22m
+[backend] 13:24:13  GET /api/auth/me
+[backend] 13:24:13  GET /api/auth/me
+[backend] 13:24:13  GET /api/notifications
+[backend] 13:24:13  GET /api/beds/wards
+[backend] 13:24:13  GET /api/beds
+[backend] 13:24:13  GET /api/patients
+[backend] 13:24:13  GET /api/departments
+[backend] 13:24:13  GET /api/beds/wards
+[backend] 13:24:13  GET /api/beds
+[backend] 13:24:14  GET /api/patients
+[backend] 13:24:14  GET /api/departments
+[backend] 13:26:49  GET /api/patients
+[backend] 13:26:49  GET /api/doctors
+[backend] 13:26:49  GET /api/prescriptions
+[backend] 13:26:49  GET /api/patients
+[backend] 13:26:49  GET /api/doctors
+[backend] 13:26:49  GET /api/prescriptions
+[backend] 13:26:51  GET /api/lab-tests
+[backend] 13:26:52  GET /api/lab-tests
+[backend] 13:27:16  GET /api/patients
+[backend] 13:27:16  GET /api/doctors
+[backend] 13:27:16  GET /api/prescriptions
+[backend] 13:27:16  GET /api/patients
+[backend] 13:27:16  GET /api/doctors
+[backend] 13:27:16  GET /api/prescriptions
+[backend] 13:27:18  GET /api/patients
+[backend] 13:27:18  GET /api/patients
+[backend] 13:27:55  GET /api/patients
+[backend] 13:27:56  GET /api/appointments
+[backend] 13:27:56  GET /api/doctors
+[backend] 13:27:56  GET /api/lab-tests
+[backend] 13:27:56  GET /api/prescriptions
+[backend] 13:27:56  GET /api/invoices
+[backend] 13:27:56  GET /api/appointments/trend
+[backend] 13:27:56  GET /api/activity?limit=9
+[backend] 13:27:56  GET /api/patients
+[backend] 13:27:56  GET /api/appointments
+[backend] 13:27:56  GET /api/doctors
+[backend] 13:27:56  GET /api/lab-tests
+[backend] 13:27:56  GET /api/prescriptions
+[backend] 13:27:56  GET /api/invoices
+[backend] 13:27:56  GET /api/appointments/trend
+[backend] 13:27:56  GET /api/activity?limit=9
+[backend] 13:29:33  GET /api/doctors
+[backend] 13:29:33  GET /api/patients
+[backend] 13:29:34  GET /api/doctors
+[backend] 13:29:34  GET /api/patients
+[backend] 13:29:34  GET /api/doctors
+[backend] 13:29:34  GET /api/doctors
+[backend] ^C
+[frontend] ^CTerminate batch job (Y/N)? 
+[backend] ^CTerminate batch job (Y/N)? 
+[frontend] npm run dev --prefix frontend exited with code 3221225786
+[backend] npm run dev --prefix backend exited with code 3221225786
+^C
