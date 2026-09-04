@@ -175,7 +175,7 @@ export function Dashboard() {
       </div>
 
       {/* Today's appointments + recent patients + activity */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      {/* <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-1">
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
@@ -286,7 +286,7 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Error banner (retry) */}
       {error && (
