@@ -11,7 +11,7 @@ import medicinesRouter from './modules/medicines';
 import doctorsRouter from './modules/doctors';
 import nursesRouter from './modules/nurses';
 import departmentsRouter from './modules/departments';
-import pharmacyRouter from './routes/pharmacy';
+import prescriptionsRouter from './modules/prescriptions';
 import laboratoryRouter from './routes/laboratory';
 import recordsRouter from './routes/records';
 import billingRouter from './routes/billing';
@@ -44,7 +44,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api', asyncHandler(requireAuth),
-  pharmacyRouter,     // /medicines, /prescriptions
+  prescriptionsRouter, // /prescriptions
   laboratoryRouter,   // /lab-tests
   recordsRouter,      // /medical-records
   billingRouter,      // /invoices
