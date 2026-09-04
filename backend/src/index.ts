@@ -15,6 +15,7 @@ import prescriptionsRouter from './modules/prescriptions';
 import laboratoryRouter from './modules/laboratory';
 import medicalRecordsRouter from './modules/medical-records';
 import billingRouter from './modules/billing';
+import wardsRouter from './modules/wards';
 import miscRouter from './routes/misc';
 import bedsRouter from './routes/beds';
 
@@ -56,6 +57,7 @@ app.use('/api/medicines', asyncHandler(requireAuth), medicinesRouter);
 app.use('/api/lab-tests', asyncHandler(requireAuth), laboratoryRouter);
 app.use('/api/medical-records', asyncHandler(requireAuth), medicalRecordsRouter);
 app.use('/api/invoices', asyncHandler(requireAuth), billingRouter);
+app.use('/api/beds/wards', asyncHandler(requireAuth), wardsRouter);
 app.use('/api/beds', asyncHandler(requireAuth), bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
 
 // 404 for unknown API routes.
