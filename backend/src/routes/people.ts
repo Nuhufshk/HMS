@@ -1,36 +1,11 @@
 import { Router } from 'express';
 import { eq } from 'drizzle-orm';
 import { db, nextId } from '../db';
-import { doctors, nurses, departments, staff } from '../db/schema';
+import { staff } from '../db/schema';
 import { todayISO } from '../utils/date';
 import type { Staff, StaffStatus } from '../types';
 
 const router = Router();
-
-/* ------------------------------- Departments ------------------------------ */
-
-/** GET /api/departments */
-router.get('/departments', async (_req, res) => {
-  res.json(await db.select().from(departments));
-});
-
-/** GET /api/departments/:id */
-router.get('/departments/:id', async (req, res) => {
-  const rows = await db.select().from(departments).where(eq(departments.id, req.params.id)).limit(1);
-  res.json(rows[0] ?? null);
-});
-
-/** GET /api/departments/:id/staff */
-router.get('/departments/:id/staff', async (req, res) => {
-  const deptDoctors = await db.select({ name: doctors.name })
-    .from(doctors).where(eq(doctors.departmentId, req.params.id));
-  const deptNurses = await db.select({ name: nurses.name })
-    .from(nurses).where(eq(nurses.departmentId, req.params.id));
-  res.json({
-    doctors: deptDoctors.map((d) => d.name),
-    nurses: deptNurses.map((n) => n.name),
-  });
-});
 
 /* ---------------------------------- Staff --------------------------------- */
 
