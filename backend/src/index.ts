@@ -8,6 +8,7 @@ import patientsRouter from './modules/patients';
 import appointmentsRouter from './modules/appointments';
 import peopleRouter from './routes/people';
 import doctorsRouter from './modules/doctors';
+import nursesRouter from './modules/nurses';
 import pharmacyRouter from './routes/pharmacy';
 import laboratoryRouter from './routes/laboratory';
 import recordsRouter from './routes/records';
@@ -49,7 +50,8 @@ app.use('/api', asyncHandler(requireAuth),
   miscRouter);        // /notifications, /activity, /search
 app.use('/api/patients', asyncHandler(requireAuth), patientsRouter);        // /, /:id
 app.use('/api/appointments', asyncHandler(requireAuth), appointmentsRouter);
-app.use('/api/doctors', asyncHandler(requireAuth), doctorsRouter); // /, /trend, /:id, /:id/status
+app.use('/api/doctors', asyncHandler(requireAuth), doctorsRouter);
+app.use('/api/nurses', asyncHandler(requireAuth), nursesRouter); // /, /trend, /:id, /:id/status
 app.use('/api/beds', asyncHandler(requireAuth), bedsRouter);                 // /, /wards, /:id, /:id/assign, /:id/release
 
 // 404 for unknown API routes.

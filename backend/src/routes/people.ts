@@ -1,76 +1,11 @@
 import { Router } from 'express';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db, nextId } from '../db';
 import { doctors, nurses, departments, staff } from '../db/schema';
 import { todayISO } from '../utils/date';
-import type { Nurse, NurseStatus, Staff, StaffStatus } from '../types';
+import type { Staff, StaffStatus } from '../types';
 
 const router = Router();
-
-/* --------------------------------- Nurses --------------------------------- */
-
-/** GET /api/nurses */
-router.get('/nurses', async (_req, res) => {
-  const rows = await db.select().from(nurses);
-  const enriched = await Promise.all(
-    rows.map(async (n) => {
-      const deptRows = n.departmentId ? await db.select({ name: departments.name })
-        .from(departments).where(eq(departments.id, n.departmentId)).limit(1) : [];
-      return { ...n, departmentName: deptRows[0]?.name ?? '—' };
-    }),
-  );
-  res.json(enriched);
-});
-
-/** POST /api/nurses */
-router.post('/nurses', async (req, res) => {
-  const body = (req.body ?? {}) as Partial<Nurse>;
-  if (!body.name || !body.departmentId || !body.phone || !body.ward) {
-    res.status(400).json({ message: 'Name, department, phone and ward are required.' });
-    return;
-  }
-
-  const existing = await db.select({ id: nurses.id }).from(nurses);
-  const id = nextId('NS-', existing);
-
-  const values = {
-    id,
-    name: body.name,
-    departmentId: body.departmentId,
-    phone: body.phone,
-    email: body.email ?? '',
-    shift: (body.shift as Nurse['shift']) ?? 'Morning',
-    ward: body.ward,
-    status: (body.status as NurseStatus) ?? 'active',
-    joinedDate: body.joinedDate ?? todayISO(),
-  };
-
-  const inserted = await db.insert(nurses).values(values).returning();
-  res.status(201).json(inserted[0]);
-});
-
-/** PATCH /api/nurses/:id */
-router.patch('/nurses/:id', async (req, res) => {
-  const { id: _id, ...patchFields } = (req.body ?? {}) as Partial<Nurse>;
-  const updateData: Record<string, unknown> = {};
-  const allowedKeys = ['name', 'departmentId', 'phone', 'email', 'shift', 'ward', 'status', 'joinedDate'];
-  for (const key of allowedKeys) {
-    if (key in patchFields) {
-      updateData[key] = (patchFields as Record<string, unknown>)[key];
-    }
-  }
-
-  const updated = await db.update(nurses)
-    .set(updateData)
-    .where(eq(nurses.id, req.params.id))
-    .returning();
-
-  if (!updated.length) {
-    res.status(404).json({ message: 'Nurse not found' });
-    return;
-  }
-  res.json(updated[0]);
-});
 
 /* ------------------------------- Departments ------------------------------ */
 
