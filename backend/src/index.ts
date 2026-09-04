@@ -46,11 +46,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'adom-hms-backend', time: new Date().toISOString() });
 });
 
-app.use('/api', asyncHandler(requireAuth),
-  prescriptionsRouter,  // /prescriptions
-  notificationsRouter, // /notifications
-  searchRouter,        // /search
-  activityRouter);     // /activity
+app.use('/api/prescriptions', asyncHandler(requireAuth), prescriptionsRouter);
+app.use('/api/notifications', asyncHandler(requireAuth), notificationsRouter);
+app.use('/api/search', asyncHandler(requireAuth), searchRouter);
+app.use('/api/activity', asyncHandler(requireAuth), activityRouter);
 app.use('/api/patients', asyncHandler(requireAuth), patientsRouter);        // /, /:id
 app.use('/api/appointments', asyncHandler(requireAuth), appointmentsRouter);
 app.use('/api/doctors', asyncHandler(requireAuth), doctorsRouter);
